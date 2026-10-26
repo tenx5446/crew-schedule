@@ -42,7 +42,9 @@ html,body{margin:0;height:100%;background:#eef0ec;color:#1c2420;font-family:-app
     'return function(){var a=Array.prototype.slice.call(arguments);post(String(n),a).then(function(r){if(s)s(r)},function(e){if(f)f(e)})}}})}'+
     'window.google={script:{run:mk(null,null),host:{close:function(){},setHeight:function(){},setWidth:function(){}},url:{getLocation:function(cb){cb({parameter:{k:K},parameters:{k:[K]},hash:""})}}}};'+
     // Check for a newer version of the screens in the background; it is used next time the app opens.
-    'setTimeout(function(){post("__ver").then(function(v){if(v&&v!==VER)return post("__page").then(function(p){try{localStorage.setItem(PK,JSON.stringify(p))}catch(e){}})}).catch(function(){})},4000);'+
+    'var busyChk=false,lastChk=0;function chk(){if(busyChk||Date.now()-lastChk<20000)return;busyChk=true;lastChk=Date.now();post("__ver").then(function(v){if(v&&v!==VER)return post("__page").then(function(p){try{localStorage.setItem(PK,JSON.stringify(p))}catch(e){}VER=p.ver;bar()})}).catch(function(){}).then(function(){busyChk=false})}'+
+    'function bar(){if(document.getElementById("updBar"))return;var d=document.createElement("button");d.id="updBar";d.type="button";d.textContent="Update ready. Tap to refresh";d.style.cssText="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:70;background:#e0a412;color:#2a2005;border:0;border-radius:6px;padding:10px 16px;font:600 15px system-ui;box-shadow:0 2px 8px rgba(0,0,0,.3)";d.onclick=function(){location.reload()};document.body.appendChild(d)}'+
+    'setTimeout(chk,4000);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()});'+
     '})();<\/script>'}
   function show(p){var h=String(p.html||"");var s=shim(p.ver||"");
     h=h.indexOf("<body>")>=0?h.replace("<body>","<body>"+s):s+h;
