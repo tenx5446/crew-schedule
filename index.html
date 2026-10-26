@@ -34,7 +34,7 @@ html,body{margin:0;height:100%;background:#eef0ec;color:#1c2420;font-family:-app
   function msg(t){var e=document.getElementById("msg");if(e)e.textContent=t}
   if(!K){msg("Open the personal Crew Schedule link Gustavo sent you.");return}
   function post(fn,args){return fetch(EXEC,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:K,fn:fn,args:args||[]})})
-    .then(function(r){return r.json()}).then(function(j){if(!j||!j.ok)throw new Error(j&&j.error||"Couldn't reach the schedule");return j.result})}
+    .then(function(r){return r.text().then(function(t){try{return JSON.parse(t)}catch(e){throw new Error(/doPost/.test(t)?"Code.gs not updated yet (no doPost)":"Unexpected reply from Google: "+t.replace(/<[^>]*>/g," ").replace(/\s+/g," ").slice(0,90))}})}).then(function(j){if(!j||!j.ok)throw new Error(j&&j.error||"Couldn't reach the schedule");return j.result})}
   // Runs inside the app page: makes google.script.run calls go to the web app.
   function shim(ver){return '<script>(function(){var EXEC='+JSON.stringify(EXEC)+',K='+JSON.stringify(K)+',VER='+JSON.stringify(ver)+',PK='+JSON.stringify(PK)+';window.APP_KEY=K;window.APP_HOSTED=true;'+
     'function post(fn,args){return fetch(EXEC,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:K,fn:fn,args:args||[]})}).then(function(r){return r.json()}).then(function(j){if(!j||!j.ok){var e=new Error(j&&j.error||"Couldn\'t save. Check your connection and try again.");e.message=j&&j.error||e.message;throw e}return j.result})}'+
@@ -52,7 +52,7 @@ html,body{margin:0;height:100%;background:#eef0ec;color:#1c2420;font-family:-app
   if(cached&&cached.html){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){show(cached)});else show(cached);return}
   msg("Opening… (first time takes a few seconds)");
   post("__page").then(function(p){try{localStorage.setItem(PK,JSON.stringify(p))}catch(e){}show(p)})
-    .catch(function(e){var t=String(e&&e.message||e);msg(t.indexOf("NOT_ALLOWED")>=0?"This link isn't active. Ask Gustavo for your personal Crew Schedule link.":"Couldn't open the schedule. Check your connection and try again.")});
+    .catch(function(e){var t=String(e&&e.message||e);msg(t.indexOf("NOT_ALLOWED")>=0?"This link isn't active. Ask Gustavo for your personal Crew Schedule link.":"Couldn't open the schedule. Check your connection and try again. ("+t.slice(0,140)+")")});
 })();
 </script>
 </body>
