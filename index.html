@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crew Schedule</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Crew Schedule">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#141917">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<style>
+html,body{margin:0;height:100%;background:#eef0ec;color:#1c2420;font-family:-apple-system,system-ui,Helvetica,Arial,sans-serif}
+@media (prefers-color-scheme:dark){html,body{background:#141917;color:#e7ece8}}
+#splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px}
+#splash b{font-size:28px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+#splash b span{background:#e0a412;color:#2a2005;padding:0 .25em;margin-right:.25em}
+#splash p{margin:0;opacity:.7;font-size:15px;text-align:center;padding:0 24px}
+</style>
+</head>
+<body>
+<div id="splash"><b><span>Crew</span>Schedule</b><p id="msg">Opening…</p></div>
+<script>
+/* Crew Schedule loader. The app's screens are kept on this device and open right away;
+   the data comes from the Crew Schedule Google Sheet through the Apps Script web app. */
+(function(){
+  var EXEC="https://script.google.com/macros/s/AKfycbwHveE0gsR51kPvhtIZBHWm217NgWzLkAMpg7R-6fkfPBBrnC7enMLHSwx6tFDEabqr/exec";
+  var qs=location.search,m=qs.match(/[?&]k=([A-Za-z0-9]+)/),K="";
+  try{K=m?m[1]:(localStorage.getItem("crewKey")||"");if(m)localStorage.setItem("crewKey",K)}catch(e){K=m?m[1]:""}
+  var fresh=/[?&]fresh=1/.test(qs),PK="crewPage:"+K;
+  function msg(t){var e=document.getElementById("msg");if(e)e.textContent=t}
+  if(!K){msg("Open the personal Crew Schedule link Gustavo sent you.");return}
+  function post(fn,args){return fetch(EXEC,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:K,fn:fn,args:args||[]})})
+    .then(function(r){return r.json()}).then(function(j){if(!j||!j.ok)throw new Error(j&&j.error||"Couldn't reach the schedule");return j.result})}
+  // Runs inside the app page: makes google.script.run calls go to the web app.
+  function shim(ver){return '<script>(function(){var EXEC='+JSON.stringify(EXEC)+',K='+JSON.stringify(K)+',VER='+JSON.stringify(ver)+',PK='+JSON.stringify(PK)+';window.APP_KEY=K;window.APP_HOSTED=true;'+
+    'function post(fn,args){return fetch(EXEC,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:K,fn:fn,args:args||[]})}).then(function(r){return r.json()}).then(function(j){if(!j||!j.ok){var e=new Error(j&&j.error||"Couldn\'t save. Check your connection and try again.");e.message=j&&j.error||e.message;throw e}return j.result})}'+
+    'function mk(s,f){return new Proxy({},{get:function(_,n){if(n==="withSuccessHandler")return function(h){return mk(h,f)};if(n==="withFailureHandler")return function(h){return mk(s,h)};if(n==="withUserObject")return function(){return mk(s,f)};'+
+    'return function(){var a=Array.prototype.slice.call(arguments);post(String(n),a).then(function(r){if(s)s(r)},function(e){if(f)f(e)})}}})}'+
+    'window.google={script:{run:mk(null,null),host:{close:function(){},setHeight:function(){},setWidth:function(){}},url:{getLocation:function(cb){cb({parameter:{k:K},parameters:{k:[K]},hash:""})}}}};'+
+    // Check for a newer version of the screens in the background; it is used next time the app opens.
+    'setTimeout(function(){post("__ver").then(function(v){if(v&&v!==VER)return post("__page").then(function(p){try{localStorage.setItem(PK,JSON.stringify(p))}catch(e){}})}).catch(function(){})},4000);'+
+    '})();<\/script>'}
+  function show(p){var h=String(p.html||"");var s=shim(p.ver||"");
+    h=h.indexOf("<body>")>=0?h.replace("<body>","<body>"+s):s+h;
+    document.open();document.write(h);document.close()}
+  var cached=null;
+  if(!fresh){try{cached=JSON.parse(localStorage.getItem(PK)||"null")}catch(e){}}
+  if(cached&&cached.html){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){show(cached)});else show(cached);return}
+  msg("Opening… (first time takes a few seconds)");
+  post("__page").then(function(p){try{localStorage.setItem(PK,JSON.stringify(p))}catch(e){}show(p)})
+    .catch(function(e){var t=String(e&&e.message||e);msg(t.indexOf("NOT_ALLOWED")>=0?"This link isn't active. Ask Gustavo for your personal Crew Schedule link.":"Couldn't open the schedule. Check your connection and try again.")});
+})();
+</script>
+</body>
+</html>
